@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Markdown 空間</title>
+    <link rel="shortcut icon" href="../static/favicon.ico">
+    <link rel="stylesheet" href="../static/styles.css">
+</head>
+<body>
+    <div class="overview-component">  
+        <div id="Markdown-region" class="markdown-region">
+            <div class="list-section">
+                <div class="title-region">
+                    <h1>MarkDown 空間</h1>
+                </div>
+                <div class="card-box">   
+                    <ul id="card-box-ul" class="card-arrange scrollable">
+                        <li id = "add-md-card" class="list card">
+                            <img id="add-md-file">
+                            <form action="/readfile" method="post"  id="InputFile"  style="display: none;">
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="../static/home.js"></script>
+    <script>
+        const add_card_button = document.querySelector('#add-md-card')
+        add_card_button.addEventListener('click', ()=>{
+            add_card_button.querySelector('#InputFile').submit()
+            add_card_button.style.pointerEvents = "none"; 
+        })
+    </script>
+</body>
+</html>
