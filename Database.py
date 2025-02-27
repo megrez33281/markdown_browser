@@ -44,8 +44,11 @@ def InsertMarkdown(md_id, html_name, html):
 
 def GetHtml(md_id):
     command = 'select name, html from markdowns where id = ' + MakeString(md_id)
+    query_html = QueryCommand(command)
+    if len(query_html) == 1:
+        return query_html[0]
     #print(command)
-    return QueryCommand(command)[0]
+    return '', ''
 
 def GetAllHtml():
     command = 'select id, name from markdowns'

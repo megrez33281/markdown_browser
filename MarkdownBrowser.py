@@ -52,6 +52,9 @@ def DeleteFile():
 def queryDataMessageByName(md_id):
     print("md_id : ", md_id)
     html_name, html_content = Database.GetHtml(md_id)
+    if html_name == '' and html_content == '':
+        #在沒有成功讀取的情況下重定向回主頁
+        return redirect('/home')
     decoded_bytes = base64.b64decode(html_content)
     # 將 bytes 轉回原始的字符串
     decoded_string = decoded_bytes.decode('utf-8')

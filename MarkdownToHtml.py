@@ -99,6 +99,7 @@ def get_name(path):
     return path[index+1:]
 
 def CatchPic(md_str, path):
+    #找到md檔案中的圖片
     markdown_image_re = r'!\[(.*?)\]\((.*?)\)'
     matches = re.findall(markdown_image_re, md_str)
     root_path = getRoot(path)
