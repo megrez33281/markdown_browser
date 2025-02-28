@@ -51,6 +51,7 @@ def DeleteFile():
 @app.route('/mdfile/<md_id>', methods=['GET'])
 def queryDataMessageByName(md_id):
     print("md_id : ", md_id)
+    assert md_id != None
     html_name, html_content = Database.GetHtml(md_id)
     if html_name == '' and html_content == '':
         #在沒有成功讀取的情況下重定向回主頁
