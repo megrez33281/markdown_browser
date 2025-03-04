@@ -29,7 +29,6 @@ def QueryCommand(command):
     print(command)
     cur.execute(command)
     datas = cur.fetchall()
-    assert len(datas) > 0
     #print(datas)
     conn.commit()
     conn.close()
@@ -42,7 +41,7 @@ def MakeString(a_str):
 
 def InsertMarkdown(md_id, html_name, html):
     assert isinstance(html_name, str)
-    assert isinstance(html, str)
+    assert isinstance(html, bytes)
     conn=sqlite3.connect ('./' + name.replace('.db', '') +  '.db')
     cur=conn.cursor()
     cur.execute('INSERT INTO markdowns (id, name, html) VALUES (?, ?, ?)', (str(md_id), html_name, html))

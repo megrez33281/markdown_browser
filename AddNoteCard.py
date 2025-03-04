@@ -4,10 +4,13 @@ from bs4 import BeautifulSoup
 import chardet
 deleteIcon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAAAXNSR0IArs4c6QAAArpJREFUeF7tnNFRwzAMQOMuUnsSyiYwCWUS2IQySZxFas4fvaP9aKpKqkJ4/GLJ6nuR7PQ40sBPKIEUujubDwgIfggQgIBgAsHb0wEICCYQvD0dgIBgAsHb0wEICCYQvD0dgIBzArXW5skk57yoh25RxXTwCPB8/G7IjYAbIHkuQYCQrjcwYTkPX649U9RnAAJ0hzoClD1DBygBasMRoCWojEeAEqA2HAFagsp4BCgBasPDBVx+gLlrqbZgLbC5+EfXr76GImBO6fXfI+CCDx2ge6DU0QhQI9QlQICOnzoaAWqEugQI0PFTR/97AVoA0fHSJ2Bx19BogNr9ETDzVxVzb+IICAaIAARIp9j5eu0T9NfjpfQ4hPkuaF0dRAcEnyEIQMD1v272vodHH+J0AB1AB0i6gGso11CuoZKOmV0bfQhG7z8L6GIBI4gRxAiSds3V9dEjIHp/KUxGECOIESTtGkaQITFGECOIEWTYUPP/aoBvQ89xM4IYQYwgRtAvAtoXOSlMRhAjiBEk7RpexAyJMYIYQYwgw4biRUwKkxHECGIESbvG9RZkWswdyf79i9gdzExDEGCKU54MAXJmphEIMMUpT4YAOTPTCASY4pQnQ4CcmWnEGgSMwzBkUyrLSVZzzsWyHI+vIr6GYdhZFrmgXIec87NlPeYCpmn6aK29WBa5lFwppf12u323rMdcwDiOOaXUu2B1Y6i1VkopddECenHTNL211vaWhUbn8nj6+2cy74ATqFrrms4C89l/4uQm4Fcn9PPgz46j1tprKeXTqwNdBfSix3HcbTabp9Zavxl1EYuXkVLqwOvxePwupRy84LuOIM+i15TbvQPWBMvjsyDAg6ogJwIEsDyWIsCDqiAnAgSwPJYiwIOqICcCBLA8liLAg6ogJwIEsDyWIsCDqiAnAgSwPJb+AIYML44PWikOAAAAAElFTkSuQmCC"
 def AddElement(path):
+    print("path = ", path)
     html_str = ''
+    assert path != ''
     with open(path, 'rb') as file:
+        # 偵測檔案編碼
         encoding = chardet.detect(file.read())
-    print("encoding = ", encoding['encoding'])
+    #print("encoding = ", encoding['encoding'])
     with open(path, mode='r', encoding = encoding['encoding'], errors='ignore') as file:
         html_str = file.read()
     soup = BeautifulSoup(html_str, 'html.parser')
