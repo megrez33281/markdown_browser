@@ -99,15 +99,17 @@ def test_InsertMarkdown(mocker):
     # 模擬fetchall()的回傳
     mock_cursor.fetchall.return_value = ["test"]
 
+    # 偽造從資料庫中取得的資料
     md_id = 10206262 
     html_name = "測試測試" 
     html = "fd4f8e4sf84esf4e8sfe4s8es4f8es4f8es4fes8f4esf84es"
-    Database.InsertMarkdown(md_id, html_name, html)
+    html_byte = html.encode("utf-8") 
+    Database.InsertMarkdown(md_id, html_name, html_byte)
 
     # 確保呼叫的路徑正確
     # 檢查在Database中sqlite3.connect是否只被呼叫了一次，並且路徑正確
     mocker.assert_called_once_with("./MarkdownData.db")
-    mock_cursor.execute.assert_called_once_with('INSERT INTO markdowns (id, name, html) VALUES (?, ?, ?)', (str(md_id), html_name, html))
+    mock_cursor.execute.assert_called_once_with('INSERT INTO markdowns (id, name, html) VALUES (?, ?, ?)', (str(md_id), html_name, html_byte))
     # 檢查commit以及close是否有執行
     mock_conn.commit.assert_called_once()
     mock_conn.close.assert_called_once()
@@ -119,8 +121,10 @@ def test_GetHtml(mocker):
     mocker.assert_called_once_with("select name, html from markdowns where id = '1234567'")
     assert name == "html name" and html == "html"
 
+
 @mock.patch("Database.QueryCommand") #替代Database中的QueryCommand
 def test_GetHtml_No_Html(mocker):
+    # 測試資料庫中沒有對應檔案的情況
     mocker.return_value = []
     name, html = Database.GetHtml("1234567")
     mocker.assert_called_once_with("select name, html from markdowns where id = '1234567'")
