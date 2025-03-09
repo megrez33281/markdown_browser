@@ -109,9 +109,9 @@ def CatchPic(md_str, path):
         relatively_path = match[1]
         if relatively_path.find("https://") == -1:
             if not re.match('[A-Z]:/', relatively_path):
-                pic_path[relatively_path] = root_path + relatively_path
+                pic_path[relatively_path] = root_path + relatively_path.replace("./", "").replace(".\\", "")
             else:
-                pic_path[relatively_path] = relatively_path
+                pic_path[relatively_path] = relatively_path.replace("./", "").replace(".\\", "")
     #print(pic_path)
     return pic_path
 
@@ -134,6 +134,7 @@ def GetFormat(FileName):
     return FileName[index+1:]
 
 def ReplaceSrc(md_str, pic_id:dict):
+    #print(pic_id)
     md_list = md_str.split('\n')
     #print(md_list)
     new_md = ""
@@ -161,10 +162,12 @@ def reNamePic(pic_paths:dict):
         #print(key)
         pic_id[key] = "Image" + str(count)
         count += 1
+
+    #print(pic_id)
     return pic_id
         
 def FindKeyFromValue(a_dict:dict, value):
-    ##此處由於圖片重新命名的值皆不同，顧可以直接從值找到key
+    ##此處由於圖片重新命名的值皆不同，故可以直接從值找到key
     #print("Value = ", value)
     for key in a_dict.keys():
         if a_dict[key] == value:
