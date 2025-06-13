@@ -4,18 +4,34 @@ import re
 import base64
 import chardet
 
-def image_to_base64(image_path):
+import requests
 
-    index = 0
-    for i in range(0, len(image_path)):
-        if image_path[len(image_path)-1-i] == '.':
-            index = len(image_path)-1-i
-            break
-    format = image_path[index+1:]
-    #將圖片讀取成base64
-    with open(image_path, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-    return "data:image/" + format + ";base64," + encoded_string
+def image_to_base64(image_path):
+    # 圖片會被轉成base64的格式內嵌入html中
+    print(image_path)
+    if image_path.find("http://") == -1 and image_path.find("https://") == -1:
+        # 從路徑中抓取圖片格式
+        format = GetFormat(image_path)
+
+        #將圖片讀取成base64
+        with open(image_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+        base64_format = "data:image/" + format + ";base64," + encoded_string
+    
+    else:
+        #抓取網路圖片並轉成Base64
+        response = requests.get(image_path)
+        if response.status_code == 200:
+            # 將圖片儲存為本地檔案
+            image_content = response.content
+            # 將二進位內容轉換為 Base64 編碼
+            base64_code = base64.b64encode(image_content).decode('utf-8')
+            base64_format = "data:image/" + 'png' + ";base64," + base64_code
+
+        else:
+            print(f"圖片下載失敗")
+            return -1
+    return base64_format
 
 def MakeMarkdownContainer(contents, scriptContents, title):
     #創建一個 HTML 結構
@@ -99,19 +115,23 @@ def get_name(path):
     return path[index+1:]
 
 def CatchPic(md_str, path):
-    #找到md檔案中的圖片
     markdown_image_re = r'!\[(.*?)\]\((.*?)\)'
     matches = re.findall(markdown_image_re, md_str)
     root_path = getRoot(path)
-    #print(root_path)
     pic_path = {}
     for match in matches:
         relatively_path = match[1]
-        if relatively_path.find("https://") == -1:
-            if not re.match('[A-Z]:/', relatively_path):
-                pic_path[relatively_path] = root_path + relatively_path.replace("./", "").replace(".\\", "")
+        if relatively_path.find("http://") == -1 and relatively_path.find("https://") == -1:
+            if not re.match('[A-Za-z]:/', relatively_path):
+                '''if root_path[-1] == "/" and relatively_path[0] == "/":
+                    root_path = root_path[:-1]'''
+                pic_path[relatively_path] = root_path + relatively_path
+                
             else:
-                pic_path[relatively_path] = relatively_path.replace("./", "").replace(".\\", "")
+                pic_path[relatively_path] = relatively_path
+        else:
+            # 網路圖片
+            pic_path[relatively_path] = relatively_path
     #print(pic_path)
     return pic_path
 
@@ -126,6 +146,10 @@ def MakeJavascriptSetSrc(name, base64Img):
     return name + '.forEach(function(img) {\n\t\timg.src = ' +  base64Img + ';\n\t' +'});\r\n'
 
 def GetFormat(FileName):
+
+    if FileName.find("http://") != -1 or FileName.find("https://") != -1:
+        # 網路圖片暫定為png
+        return 'png'
     index = 0
     for i in range(0, len(FileName)):
         if FileName[len(FileName) - 1 - i] == '.':
@@ -133,37 +157,70 @@ def GetFormat(FileName):
             break
     return FileName[index+1:]
 
+def getInnerRoot(line):
+    # 從一行md的圖片引入提取其中的路徑
+    temp = line.split("(")[-1]
+    temp = temp.split(")")[0]
+    return temp
+
 def ReplaceSrc(md_str, pic_id:dict):
-    #print(pic_id)
     md_list = md_str.split('\n')
     #print(md_list)
     new_md = ""
+    new_md_to_save = ""
     for line in md_list:
         if re.findall(r'!\[(.*?)\]\((.*?)\)', line) != []:
-            #print(line)
             new_line = line
+            new_line_to_save = line
+            
             for key in pic_id.keys():
-                if line.find(key) != -1:
+                if getInnerRoot(line) == key:
                     #print(line)
-                    new_line = new_line.replace(key, pic_id[key])
+                    #print("original line", new_line)
+                    new_line = new_line.replace(key, pic_id.get(key))
+                    format = GetFormat(key)
+                    new_line_to_save = new_line_to_save.replace(key, "/img/" + pic_id.get(key) + "." + format)
+                    #print("new line", new_line)
             new_md += new_line + "\n"
+            new_md_to_save += new_line_to_save + "\n"
 
         else:
             new_md += line + "\n"
+            new_md_to_save += line + "\n"
     #print(new_md)
-    return new_md
+    return new_md, new_md_to_save
 
+def makeScriptContent(pic_paths, pic_id):
+    #在html中新增對應變數儲存base64，並動態配置img的src
+    scriptContent = ""
+    count = 1
+    pic_base64 = {}
+    for path in pic_paths.keys():
+        file_path = pic_paths.get(path)
+        # path為在markdown中寫的路徑
+        # file_path為檔案真實路徑
+        base64 = image_to_base64(file_path)
+        if base64 != -1:
+            pic_base64[pic_id[path]] = base64
+            scriptContent += MakeJavascriptVar('Base64_Img' + str(count), base64)
+            scriptContent += MakeJavascriptQuerySelector('Img' + str(count), '.' + pic_id[path])
+            scriptContent += MakeJavascriptSetSrc('Img' + str(count), 'Base64_Img' + str(count))
+            #print(MakeJavascriptSetSrc('Img' + str(count), 'Base64_Img' + str(count)))
+            count += 1
+        else:
+            del pic_id[path]
+            count += 1
+
+    return scriptContent, pic_base64, pic_id
 
 def reNamePic(pic_paths:dict):
-    #將pic_paths內所有圖片重新命名
+    #將pic_paths內所有圖片重新命名(格式為 Image+序號)
     pic_id = {}
     count = 0
     for key in pic_paths.keys():
         #print(key)
         pic_id[key] = "Image" + str(count)
         count += 1
-
-    #print(pic_id)
     return pic_id
         
 def FindKeyFromValue(a_dict:dict, value):
@@ -176,13 +233,18 @@ def FindKeyFromValue(a_dict:dict, value):
     return False
 
 def MdToHtml(md_str, path):
-    md_str = re.sub('[\t ]*\n', '\n', md_str)
-    md_str = md_str.replace("\n", "  \n")
     pic_paths = CatchPic(md_str, path)
     pic_id = reNamePic(pic_paths)
-    md_str = ReplaceSrc(md_str, pic_id)
-    #print(md_str)
-    html = mistune.html(md_str)
+    #print(pic_paths)
+    #print(pic_id)
+    #在html中新增對應變數儲存base64，並動態配置img的src
+    scriptContent, pic_base64, pic_id = makeScriptContent(pic_paths, pic_id)
+    md_str, new_md_to_save = ReplaceSrc(md_str, pic_id)
+
+    #print(new_md_to_save)
+    md_transfer = re.sub('[\t ]*\n', '\n', md_str)
+    md_transfer = md_transfer.replace("\n", "  \n")
+    html = mistune.html(md_transfer)
     soup = BeautifulSoup(html, 'lxml')
     # 找到所有包含 href 屬性的 <a> 標籤
     for a_tag in soup.find_all('a', href=True):
@@ -213,40 +275,31 @@ def MdToHtml(md_str, path):
                 # 如果沒有 class，則直接設置新 class
                 img['class'] = [new_class]
 
-    #在html中新增對應變數儲存base64，並動態配置img的src
-    scriptContent = ""
-    count = 1
-    for path in pic_paths.keys():
-        file_path = pic_paths.get(path)
-        scriptContent += MakeJavascriptVar('Base64_Img' + str(count), image_to_base64(file_path))
-        scriptContent += MakeJavascriptQuerySelector('Img' + str(count), '.' + pic_id[path])
-        scriptContent += MakeJavascriptSetSrc('Img' + str(count), 'Base64_Img' + str(count))
-        
-        #print(MakeJavascriptSetSrc('Img' + str(count), 'Base64_Img' + str(count)))
-        count += 1
     #print(scriptContent)
 
     #print(soup)
-    return soup.body.contents, scriptContent
+    return soup.body.contents, scriptContent, pic_base64, new_md_to_save
 
 def ReadMd(path):
     with open(path, 'rb') as file:
         encoding = chardet.detect(file.read())
     
-    print("encoding = ", encoding['encoding'])
+    #print("encoding = ", encoding['encoding'])
     md = ''
     with open(path, mode='r', encoding=encoding['encoding'], errors='ignore') as file:
         md = file.read()
     return md
-    
 
 def MarkdownTohtml(path):
     md = ReadMd(path)
-    md_html, scriptContent = MdToHtml(md, path)
+    md_html, scriptContent, pic_base64, new_md_to_save = MdToHtml(md, path)
     title = get_name(path)
     the_html = MakeMarkdownContainer(md_html, scriptContent, title.replace('.md', ''))
-    return the_html
+    #print(the_html)
+    return the_html, pic_base64, new_md_to_save
 
 if __name__ == '__main__':
+    path = "C:/Users/apple/Downloads/爬蟲/爬蟲.md"
     #print(generate_html())
+    the_html, pic_base64, new_md_to_save = MarkdownTohtml(path)
     {}

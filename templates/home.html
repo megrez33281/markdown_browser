@@ -12,6 +12,15 @@
             <div class="list-section">
                 <div class="title-region">
                     <h1>MarkDown 空間</h1>
+                    <div style="width:100%;">
+                        <form action='downloadMd' method="post"  id="downloadMd" style="width:100%; display: flex; justify-content: right;">
+                            <span>下載MarkDown：</span>
+                            <input id="download_markdown" name="download_url" style="width:25%" type="text" title="從HackMd下載MarkDown" placeholder="輸入HackMd網址">
+                            <button id="send_html" style="margin-left: 10px;">下載</button>
+                        </form>
+                                    
+                    </div>
+            
                 </div>
                 <div class="card-box">   
                     <ul id="card-box-ul" class="card-arrange scrollable">
@@ -31,6 +40,22 @@
         add_card_button.addEventListener('click', ()=>{
             add_card_button.querySelector('#InputFile').submit()
             add_card_button.style.pointerEvents = "none"; 
+        })
+
+        const download_form = document.querySelector('#downloadMd')
+        const downloader = document.querySelector("#download_markdown")
+        downloader.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                // Enter鍵
+                download_form.submit()
+                input.value = ''; // 清空輸入框
+            }
+        })
+
+        const download_button = document.querySelector("#send_html")
+        download_button.addEventListener('click', (event) =>{
+            download_form.submit()
+            input.value = ''; // 清空輸入框
         })
     </script>
 </body>

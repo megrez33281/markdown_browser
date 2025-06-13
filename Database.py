@@ -9,21 +9,30 @@ def InitialDatabase():
         CREATE TABLE IF NOT EXISTS markdowns (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
-            html TEXT NOT NULL
+            html TEXT NOT NULL,
+            md TEXT NOT NULL
         )
     ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS pictures (
+            id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            pic TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+    return 0
 
 def ExecuteCommand(command):
-    assert isinstance(command, str) and len(command) > 0
     conn=sqlite3.connect ('./' + name.replace('.db', '') +  '.db')
     cur=conn.cursor()
     cur.execute(command)
     conn.commit()
     conn.close()
-
+    
 
 def QueryCommand(command):
-    assert isinstance(command, str) and len(command) > 0
     conn=sqlite3.connect ('./' + name.replace('.db', '') +  '.db')
     cur=conn.cursor()
     print(command)
@@ -35,26 +44,66 @@ def QueryCommand(command):
     return datas
 
 def MakeString(a_str):
-    if not a_str:
-        raise ValueError('輸入的a_str不存在')
     return "'" + str(a_str) + "'"
 
-def InsertMarkdown(md_id, html_name, html):
-    assert isinstance(html_name, str)
-    assert isinstance(html, bytes)
+def InsertPictures(md_id, pic_base64:dict):
     conn=sqlite3.connect ('./' + name.replace('.db', '') +  '.db')
     cur=conn.cursor()
-    cur.execute('INSERT INTO markdowns (id, name, html) VALUES (?, ?, ?)', (str(md_id), html_name, html))
+    for key in pic_base64.keys():
+        cur.execute('INSERT INTO pictures (id, name, pic) VALUES (?, ?, ?)', (str(md_id), key, pic_base64.get(key)))
+    conn.commit()
+    conn.close()
+    return 0
+
+def InsertMarkdown(md_id, html_name, html, md):
+    conn=sqlite3.connect ('./' + name.replace('.db', '') +  '.db')
+    cur=conn.cursor()
+    cur.execute('INSERT INTO markdowns (id, name, html, md) VALUES (?, ?, ?, ?)', (str(md_id), html_name, html, md))
     conn.commit()
     conn.close()
 
+def UpdateMarkdown(md_id, html_name, html, md):
+    conn = sqlite3.connect('./' + name.replace('.db', '') + '.db')
+    cur = conn.cursor()
+    # 更新資料
+    cur.execute('''
+        UPDATE markdowns 
+        SET name = ?, html = ?, md = ? 
+        WHERE id = ?
+    ''', (html_name, html, md, str(md_id)))
+    conn.commit()
+    conn.close()
+
+def UpdatePictures(md_id, pic_base64: dict):
+    conn = sqlite3.connect('./' + name.replace('.db', '') + '.db')
+    cur = conn.cursor()
+    
+    # 更新圖片資料
+    for key, value in pic_base64.items():
+        cur.execute('''
+            UPDATE pictures 
+            SET pic = ? 
+            WHERE id = ? AND name = ?
+        ''', (value, str(md_id), key))
+    
+    conn.commit()
+    conn.close()
+    return 0
+
 def GetHtml(md_id):
     command = 'select name, html from markdowns where id = ' + MakeString(md_id)
-    query_html = QueryCommand(command)
-    if len(query_html) == 1:
-        return query_html[0]
     #print(command)
-    return ['', '']
+    return QueryCommand(command)[0]
+
+def GetPictures(md_id):
+    command = 'select name, pic from pictures where id = ' + MakeString(md_id)
+    #print(command)
+    return QueryCommand(command)
+
+def GetMd(md_id):
+    command = 'select name, md from markdowns where id = ' + MakeString(md_id)
+    #print(command)
+    return QueryCommand(command)[0]
 
 def GetAllHtml():
     command = 'select id, name from markdowns'
@@ -63,6 +112,8 @@ def GetAllHtml():
 
 def DeleteHtml(md_id):
     command = 'delete from markdowns where id = ' + MakeString(md_id)
+    ExecuteCommand(command)
+    command = 'delete from pictures where id = ' + MakeString(md_id)
     ExecuteCommand(command)
 
 def clear():

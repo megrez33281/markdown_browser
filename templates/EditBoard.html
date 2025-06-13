@@ -1,0 +1,32 @@
+
+<!DOCTYPE html>
+<html lang="zh">
+    <head>
+    <meta charset="utf-8"/>
+    <title>
+    </title>
+    <link href="../static/favicon.ico" rel="shortcut icon"/>
+    <meta content="width=device-width, initial-scale=1.0, name=viewport"/>
+    <link href="../static/markdownStyles.css" rel="stylesheet"/>
+    </head>
+        <body>
+            <div class="title-region" onclick='location.href = this.querySelector("a").href;'>
+                <a class="title-href" href="../home">
+                 <p class="title-href">
+                  MarkDown 空間
+                 </p>
+                </a>
+            </div>
+            <form action='SaveEditMd' method="post"  id="SaveEditMd"  style="width: 100%; height:100%;">
+                <div class="scrollable" id="markdown-content" style="height:100%; overflow: hidden;">
+                    檔案名稱：<input name="md_name" id="markdown-name" type="text" style="width:90%; margin:5px;">
+                    <textarea name="md_content" id="markdown-edit-area" style="width:100%; height:100%;"></textarea>
+                    <input name="md_id" type="text" id="markdown-id" style="display: none;">
+                    <div style="width:100%; display:flex; justify-content: right;">
+                        <button onclick="document.querySelector('#SaveEditMd').submit()">儲存</button>
+                    </div>        
+                </div>
+            </form>
+            
+        </body>
+</html>
